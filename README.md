@@ -51,11 +51,43 @@ Full walkthrough, including wiring the widget into a real React/Svelte app:
 
 ## Using the widget in an app
 
+```bash
+npm install feedback-sdk-widget
+```
+
+The widget is a browser custom element (`class extends HTMLElement`). **Import it
+on the client only** -- importing at module top level crashes any server-rendering
+framework (Next.js, SvelteKit, Nuxt) because `HTMLElement` does not exist on the
+server. Use the guarded pattern for your stack:
+
+Plain client-side app (Vite/CRA, no SSR):
+
 ```js
 import "feedback-sdk-widget";
-// then, anywhere in your markup:
 // <feedback-widget endpoint="https://your-service" token="fbk_myapp_..."></feedback-widget>
 ```
+
+React with SSR / Next.js -- import in an effect:
+
+```jsx
+import { useEffect } from "react";
+export function Feedback({ endpoint, token }) {
+  useEffect(() => { import("feedback-sdk-widget"); }, []);
+  return <feedback-widget endpoint={endpoint} token={token} />;
+}
+```
+
+SvelteKit -- import in `onMount` (browser only):
+
+```svelte
+<script>
+  import { onMount } from "svelte";
+  onMount(() => import("feedback-sdk-widget"));
+</script>
+<feedback-widget {endpoint} {token}></feedback-widget>
+```
+
+Attributes:
 
 - `endpoint` (required) -- your service URL (`CONVEX_SITE_URL`)
 - `token` (required) -- the project's public submit token (`fbk_...`)
