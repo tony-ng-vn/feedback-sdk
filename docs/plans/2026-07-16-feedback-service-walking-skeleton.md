@@ -137,7 +137,9 @@ export default defineConfig({
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "noEmit": true
   },
   "include": ["./**/*"],
   "exclude": ["./_generated"]
