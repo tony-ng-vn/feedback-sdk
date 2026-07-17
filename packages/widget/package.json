@@ -1,0 +1,27 @@
+{
+  "name": "@feedback-sdk/widget",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "dist/feedback-widget.js",
+  "module": "dist/feedback-widget.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/feedback-widget.js"
+    },
+    "./iife": "./dist/feedback-widget.iife.js"
+  },
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@feedback-sdk/client": "0.0.0"
+  },
+  "devDependencies": {
+    "happy-dom": "^20.10.6",
+    "vite": "^7.0.0"
+  }
+}

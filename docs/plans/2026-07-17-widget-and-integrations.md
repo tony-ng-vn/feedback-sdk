@@ -101,7 +101,7 @@ Dispatch recipe (optional, for a Workflow): run Task 1 alone; then fan out `[Tas
     "@feedback-sdk/client": "0.0.0"
   },
   "devDependencies": {
-    "happy-dom": "^15.0.0",
+    "happy-dom": "^20.10.6",
     "vite": "^7.0.0"
   }
 }
