@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>feedback-widget demo</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        max-width: 640px;
+        margin: 40px auto;
+        padding: 0 20px;
+        color: #111;
+      }
+      h1 { font-size: 20px; }
+      label { display: block; margin: 14px 0 4px; font-size: 13px; font-weight: 600; }
+      input { width: 100%; padding: 8px 10px; font-size: 14px; box-sizing: border-box; }
+      button.mount { margin-top: 16px; padding: 8px 14px; font-size: 14px; cursor: pointer; }
+      pre { background: #f5f5f7; padding: 12px; border-radius: 8px; font-size: 12px; overflow: auto; }
+      .hint { color: #6b7280; font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <h1>feedback-widget demo</h1>
+    <p class="hint">
+      Fill in your service URL (CONVEX_SITE_URL) and a project submit token
+      (fbk_...), then Mount. A Feedback button appears bottom-right. Submissions
+      fire a <code>feedback-submitted</code> event, logged below. Read them back
+      with the admin key (see docs/TESTING.md).
+    </p>
+
+    <label for="endpoint">Endpoint (CONVEX_SITE_URL)</label>
+    <input id="endpoint" placeholder="http://127.0.0.1:3211" />
+
+    <label for="token">Submit token (fbk_...)</label>
+    <input id="token" placeholder="fbk_myapp_..." />
+
+    <button class="mount" id="mount">Mount widget</button>
+
+    <h2 style="font-size: 15px; margin-top: 28px;">Submitted events</h2>
+    <pre id="log">(none yet)</pre>
+
+    <!-- The built ESM bundle registers <feedback-widget> on import. Build it
+         first: npm run build --workspace @feedback-sdk/widget -->
+    <script type="module" src="../packages/widget/dist/feedback-widget.js"></script>
+    <script type="module">
+      const $ = (id) => document.getElementById(id);
+      const params = new URLSearchParams(location.search);
+      if (params.get("endpoint")) $("endpoint").value = params.get("endpoint");
+      if (params.get("token")) $("token").value = params.get("token");
+
+      const log = [];
+      let current = null;
+
+      $("mount").addEventListener("click", () => {
+        const endpoint = $("endpoint").value.trim();
+        const token = $("token").value.trim();
+        if (!endpoint || !token) {
+          alert("Enter an endpoint and a submit token first.");
+          return;
+        }
+        if (current) current.remove();
+        current = document.createElement("feedback-widget");
+        current.setAttribute("endpoint", endpoint);
+        current.setAttribute("token", token);
+        current.addEventListener("feedback-submitted", (e) => {
+          log.unshift(`submitted id=${e.detail.id} at ${new Date().toISOString()}`);
+          $("log").textContent = log.join("\n");
+        });
+        document.body.appendChild(current);
+      });
+    </script>
+  </body>
+</html>
