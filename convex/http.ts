@@ -122,6 +122,27 @@ const resolve = httpAction(async (ctx, request) => {
   return json({ ok: true }, 200);
 });
 
+const del = httpAction(async (ctx, request) => {
+  const projectId = await projectForToken(ctx, request, "admin");
+  if (projectId === null) return json({ error: "Unauthorized" }, 401);
+
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "Invalid JSON" }, 400);
+  }
+  const id = typeof body.id === "string" ? body.id : "";
+  if (id === "") return json({ error: "Invalid id" }, 400);
+
+  const ok = await ctx.runMutation(internal.feedback.remove, {
+    projectId,
+    id: id as Id<"feedback">,
+  });
+  if (!ok) return json({ error: "Not found" }, 404);
+  return json({ ok: true }, 200);
+});
+
 const http = httpRouter();
 http.route({ path: "/submit", method: "POST", handler: submit });
 http.route({ path: "/submit", method: "OPTIONS", handler: preflight });
@@ -129,5 +150,7 @@ http.route({ path: "/feedback", method: "GET", handler: list });
 http.route({ path: "/feedback", method: "OPTIONS", handler: preflight });
 http.route({ path: "/feedback/resolve", method: "POST", handler: resolve });
 http.route({ path: "/feedback/resolve", method: "OPTIONS", handler: preflight });
+http.route({ path: "/feedback/delete", method: "POST", handler: del });
+http.route({ path: "/feedback/delete", method: "OPTIONS", handler: preflight });
 
 export default http;

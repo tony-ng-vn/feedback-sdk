@@ -108,6 +108,31 @@ test("resolve flips status and is rejected for another project", async () => {
   expect(row?.status).toBe("done");
 });
 
+test("delete removes a row and is rejected for another project", async () => {
+  const t = convexTest(schema, modules);
+  const euno = await project(t, "euno");
+  const todo = await project(t, "todo");
+  const submitRes = await submit(t, euno.submitToken, { message: "delete me" });
+  const { id } = (await submitRes.json()) as { id: Id<"feedback"> };
+
+  // Another project's admin key cannot delete euno's row.
+  const wrong = await t.fetch("/feedback/delete", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${todo.adminKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+  });
+  expect(wrong.status).toBe(404);
+  expect(await t.run((ctx) => ctx.db.get(id))).not.toBeNull();
+
+  const ok = await t.fetch("/feedback/delete", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${euno.adminKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+  });
+  expect(ok.status).toBe(200);
+  expect(await t.run((ctx) => ctx.db.get(id))).toBeNull();
+});
+
 test("CORS preflight and responses carry allow-origin headers", async () => {
   const t = convexTest(schema, modules);
   const euno = await project(t, "euno");

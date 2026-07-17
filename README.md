@@ -79,6 +79,11 @@ curl -s "$SITE/feedback" -H "Authorization: Bearer $ADMIN_KEY"
 curl -s -X POST "$SITE/feedback/resolve" \
   -H "Authorization: Bearer $ADMIN_KEY" -H "Content-Type: application/json" \
   -d '{"id":"<feedback id>","status":"done"}'
+
+# delete one (spam / noise)
+curl -s -X POST "$SITE/feedback/delete" \
+  -H "Authorization: Bearer $ADMIN_KEY" -H "Content-Type: application/json" \
+  -d '{"id":"<feedback id>"}'
 ```
 
 So in practice: submit feedback from the app, then tell your agent "read the

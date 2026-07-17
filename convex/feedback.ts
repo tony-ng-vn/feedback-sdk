@@ -83,3 +83,17 @@ export const setStatus = internalMutation({
     return true;
   },
 });
+
+export const remove = internalMutation({
+  args: { projectId: v.id("projects"), id: v.id("feedback") },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.id);
+    // Never delete a row that is missing or belongs to another project.
+    if (row === null || row.projectId !== args.projectId) {
+      return false;
+    }
+    await ctx.db.delete(args.id);
+    return true;
+  },
+});
