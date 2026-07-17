@@ -722,6 +722,7 @@ import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
+import type { Id } from "./_generated/dataModel";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -746,7 +747,7 @@ test("submit with a valid token stores feedback and returns its id", async () =>
     pageContext: "/search",
   });
   expect(res.status).toBe(200);
-  const { id } = await res.json();
+  const { id } = (await res.json()) as { id: Id<"feedback"> };
   const row = await t.run((ctx) => ctx.db.get(id));
   expect(row?.projectId).toBe(euno.projectId);
   expect(row?.message).toBe("search is broken");
@@ -806,7 +807,7 @@ test("resolve flips status and is rejected for another project", async () => {
   const euno = await project(t, "euno");
   const todo = await project(t, "todo");
   const submitRes = await submit(t, euno.submitToken, { message: "fix me" });
-  const { id } = await submitRes.json();
+  const { id } = (await submitRes.json()) as { id: Id<"feedback"> };
 
   // Wrong project's admin key cannot resolve euno's row.
   const wrong = await t.fetch("/feedback/resolve", {
