@@ -367,6 +367,7 @@ Note: this mutation is unauthenticated in the skeleton (called via `npx convex r
 - [ ] **Step 1: Write the failing test `convex/projects.test.ts`**
 
 ```ts
+/// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -483,6 +484,7 @@ git commit -m "feat(projects): mint a project with two hashed keys"
 - [ ] **Step 1: Write the failing test `convex/feedback.test.ts`**
 
 ```ts
+/// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
@@ -713,6 +715,7 @@ git commit -m "feat(feedback): add internal project-scoped feedback functions"
 - [ ] **Step 1: Write the failing test `convex/http.test.ts`**
 
 ```ts
+/// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import { api } from "./_generated/api";
