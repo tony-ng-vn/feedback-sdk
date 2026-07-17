@@ -48,11 +48,23 @@ test("submit rejects an empty message with 400", async () => {
   expect(res.status).toBe(400);
 });
 
-test("submit rejects an unknown category with 400", async () => {
+test("submit accepts a host-defined custom category", async () => {
   const t = convexTest(schema, modules);
   const euno = await project(t, "euno");
   const res = await submit(t, euno.submitToken, {
-    message: "hi", category: "spam",
+    message: "hi", category: "feature-request",
+  });
+  expect(res.status).toBe(200);
+  const { id } = (await res.json()) as { id: Id<"feedback"> };
+  const row = await t.run((ctx) => ctx.db.get(id));
+  expect(row?.category).toBe("feature-request");
+});
+
+test("submit rejects an over-long category with 400", async () => {
+  const t = convexTest(schema, modules);
+  const euno = await project(t, "euno");
+  const res = await submit(t, euno.submitToken, {
+    message: "hi", category: "x".repeat(51),
   });
   expect(res.status).toBe(400);
 });

@@ -5,7 +5,10 @@ import { bearerToken, parseToken, sha256Hex, TOKEN_PREFIXES } from "./keys";
 import type { ActionCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 
-const CATEGORIES = ["idea", "bug", "other"];
+// Categories are host-defined: the widget's `categories` attribute is
+// configurable, so the server accepts any short, non-empty label rather than a
+// fixed enum (a fixed enum silently 400s custom categories -- a footgun).
+const MAX_CATEGORY_LEN = 50;
 const STATUSES = ["new", "in_progress", "done"];
 
 // The widget runs on the host app's origin and calls this service cross-origin
@@ -61,9 +64,11 @@ const submit = httpAction(async (ctx, request) => {
   const message = typeof body.message === "string" ? body.message.trim() : "";
   if (message === "") return json({ error: "Message is required" }, 400);
 
-  const category = typeof body.category === "string" ? body.category : "idea";
-  if (!CATEGORIES.includes(category)) {
-    return json({ error: "Unknown category" }, 400);
+  const rawCategory =
+    typeof body.category === "string" ? body.category.trim() : "";
+  const category = rawCategory === "" ? "idea" : rawCategory;
+  if (category.length > MAX_CATEGORY_LEN) {
+    return json({ error: "Category too long" }, 400);
   }
 
   const pageContext =
