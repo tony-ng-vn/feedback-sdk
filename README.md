@@ -11,11 +11,11 @@ Think Sentry, except the triager on the other end is your agent, not a dashboard
 
 ## Status
 
-Early. Runs today against a **local** Convex deployment (no account needed) and
-the widget is consumed from a **local build** (not yet on npm). That's enough to
-run and test the whole loop on one machine. Publishing to npm and deploying the
-service to the cloud (so other machines/projects can use it) are the next steps
--- see Roadmap.
+Early, but usable from anywhere. The widget is published on npm as
+[`feedback-sdk-widget`](https://www.npmjs.com/package/feedback-sdk-widget), and
+the service runs either as a **local** Convex deployment (offline dev) or a
+**cloud** deployment (a public URL any app or agent can reach). Multi-tenant
+accounts, a provisioning CLI, and an MCP server are still ahead -- see Roadmap.
 
 ## What's here
 
@@ -104,8 +104,7 @@ npm test                # 31 tests: service, client, widget
 
 ## Roadmap
 
-- Publish `feedback-sdk-widget` to npm so any project installs it normally.
-- Deploy the service to a cloud Convex deployment for a public endpoint.
+- Done: widget published to npm; service deployable to a public cloud endpoint.
 - CLI: `npx feedback-sdk init` to provision a project and print keys.
 - MCP server so agents get `feedback_list` / `feedback_resolve` tools directly.
 - Multi-tenant (accounts, dashboard) to open it beyond a single owner.
