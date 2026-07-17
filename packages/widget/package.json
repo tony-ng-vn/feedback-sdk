@@ -17,10 +17,8 @@
     "build": "vite build",
     "test": "vitest run"
   },
-  "dependencies": {
-    "@feedback-sdk/client": "0.0.0"
-  },
   "devDependencies": {
+    "@feedback-sdk/client": "0.0.0",
     "happy-dom": "^20.10.6",
     "vite": "^7.0.0"
   }
