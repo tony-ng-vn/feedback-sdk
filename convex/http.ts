@@ -8,12 +8,28 @@ import type { Id } from "./_generated/dataModel";
 const CATEGORIES = ["idea", "bug", "other"];
 const STATUSES = ["new", "in_progress", "done"];
 
+// The widget runs on the host app's origin and calls this service cross-origin
+// with an Authorization header, so browsers send a CORS preflight. Allow any
+// origin: writes are gated by the submit token, reads by the admin key, not by
+// origin. Tokens are the security boundary, so "*" is correct here.
+const CORS_HEADERS: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+  "Access-Control-Max-Age": "86400",
+};
+
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...CORS_HEADERS },
   });
 }
+
+// Answer CORS preflight for every endpoint.
+const preflight = httpAction(
+  async () => new Response(null, { status: 204, headers: CORS_HEADERS }),
+);
 
 // Resolve a bearer token of the expected kind to its project id, or null.
 async function projectForToken(
@@ -108,7 +124,10 @@ const resolve = httpAction(async (ctx, request) => {
 
 const http = httpRouter();
 http.route({ path: "/submit", method: "POST", handler: submit });
+http.route({ path: "/submit", method: "OPTIONS", handler: preflight });
 http.route({ path: "/feedback", method: "GET", handler: list });
+http.route({ path: "/feedback", method: "OPTIONS", handler: preflight });
 http.route({ path: "/feedback/resolve", method: "POST", handler: resolve });
+http.route({ path: "/feedback/resolve", method: "OPTIONS", handler: preflight });
 
 export default http;

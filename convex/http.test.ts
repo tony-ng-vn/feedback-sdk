@@ -107,3 +107,18 @@ test("resolve flips status and is rejected for another project", async () => {
   const row = await t.run((ctx) => ctx.db.get(id));
   expect(row?.status).toBe("done");
 });
+
+test("CORS preflight and responses carry allow-origin headers", async () => {
+  const t = convexTest(schema, modules);
+  const euno = await project(t, "euno");
+
+  const pre = await t.fetch("/submit", { method: "OPTIONS" });
+  expect(pre.status).toBe(204);
+  expect(pre.headers.get("Access-Control-Allow-Origin")).toBe("*");
+  expect(pre.headers.get("Access-Control-Allow-Headers")).toContain(
+    "Authorization",
+  );
+
+  const res = await submit(t, euno.submitToken, { message: "cors" });
+  expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+});
