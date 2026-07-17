@@ -97,10 +97,8 @@ Dispatch recipe (optional, for a Workflow): run Task 1 alone; then fan out `[Tas
     "build": "vite build",
     "test": "vitest run"
   },
-  "dependencies": {
-    "@feedback-sdk/client": "0.0.0"
-  },
   "devDependencies": {
+    "@feedback-sdk/client": "0.0.0",
     "happy-dom": "^20.10.6",
     "vite": "^7.0.0"
   }
@@ -383,6 +381,18 @@ const STYLE = `
   [hidden] { display: none !important; }
 `;
 
+// Escape dynamic values before templating into innerHTML. Attribute values,
+// the typed message, and server error text are all untrusted from the widget's
+// point of view, so they must never be interpolated raw.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export class FeedbackWidget extends HTMLElement {
   private root: ShadowRoot;
   private open = false;
@@ -486,7 +496,7 @@ export class FeedbackWidget extends HTMLElement {
     const chips = this.categories
       .map(
         (c) =>
-          `<button class="fw-chip" data-cat="${c}" aria-pressed="${c === this.category}">${c}</button>`,
+          `<button class="fw-chip" data-cat="${escapeHtml(c)}" aria-pressed="${c === this.category}">${escapeHtml(c)}</button>`,
       )
       .join("");
 
@@ -499,11 +509,11 @@ export class FeedbackWidget extends HTMLElement {
             <button class="fw-close" aria-label="Close">x</button>
           </div>
           <div class="fw-chips">${chips}</div>
-          <textarea class="fw-input" rows="4" placeholder="What's on your mind?" ${sending || sent ? "disabled" : ""}>${this.message}</textarea>
-          ${this.state === "error" ? `<p class="fw-error" role="alert">${this.errorMessage}</p>` : ""}
+          <textarea class="fw-input" rows="4" placeholder="What's on your mind?" ${sending || sent ? "disabled" : ""}>${escapeHtml(this.message)}</textarea>
+          ${this.state === "error" ? `<p class="fw-error" role="alert">${escapeHtml(this.errorMessage)}</p>` : ""}
           <button class="fw-submit" ${this.message.trim() === "" || sending || sent ? "disabled" : ""}>${submitLabel}</button>
         </div>
-        <button class="fw-fab" aria-expanded="${this.open}">${this.label}</button>
+        <button class="fw-fab" aria-expanded="${this.open}">${escapeHtml(this.label)}</button>
       </div>
     `;
 
