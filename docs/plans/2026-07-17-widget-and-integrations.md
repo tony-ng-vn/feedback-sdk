@@ -14,7 +14,7 @@
 - Conventional Commits, imperative, lowercase, no trailing period. Never add an agent/tool co-author or mention tools.
 - TDD where there is logic to test (the web component). Integrations are verified live in the browser, per the repo rule (drive the real flow).
 - The widget is anonymous-friendly: it never requires the host app's auth. Identity is an optional `submitter` attribute.
-- Public contract is FROZEN by Task 1 and must not drift: tag name `feedback-widget`; attributes `endpoint`, `token`, `categories`, `page-context`, `label`, `submitter`; event `feedback-submitted` with `detail: { id: string }`; package name `@feedback-sdk/widget`; ESM entry `@feedback-sdk/widget` (registers the element as a side effect) and script-tag build at `dist/feedback-widget.iife.js`.
+- Public contract is FROZEN by Task 1 and must not drift: tag name `feedback-widget`; attributes `endpoint`, `token`, `categories`, `page-context`, `label`, `submitter`; event `feedback-submitted` with `detail: { id: string }`; package name `feedback-sdk-widget`; ESM entry `feedback-sdk-widget` (registers the element as a side effect) and script-tag build at `dist/feedback-widget.iife.js`.
 - Theming: Shadow DOM with these CSS custom properties (defaults in parens): `--fw-accent` (#4f46e5), `--fw-surface` (#ffffff), `--fw-surface-strong` (#f5f5f7), `--fw-text` (#111111), `--fw-muted` (#6b7280), `--fw-border` (rgba(0,0,0,0.12)), `--fw-radius` (16px), `--fw-z` (2147483000).
 - Categories default to `idea,bug,other` when the attribute is absent.
 - `page-context` defaults to `location.pathname + location.search` when the attribute is absent.
@@ -79,7 +79,7 @@ Dispatch recipe (optional, for a Workflow): run Task 1 alone; then fan out `[Tas
 
 ```json
 {
-  "name": "@feedback-sdk/widget",
+  "name": "feedback-sdk-widget",
   "version": "0.0.0",
   "type": "module",
   "main": "dist/feedback-widget.js",
@@ -143,7 +143,7 @@ export type { FeedbackSubmittedDetail, FeedbackCategory } from "./types";
 - [ ] **Step 4: Create `packages/widget/README.md` (the frozen contract)**
 
 ````markdown
-# @feedback-sdk/widget
+# feedback-sdk-widget
 
 A framework-agnostic feedback button. Renders in Shadow DOM; themeable via CSS custom properties.
 
@@ -164,7 +164,7 @@ A framework-agnostic feedback button. Renders in Shadow DOM; themeable via CSS c
 
 npm:
 ```js
-import "@feedback-sdk/widget";
+import "feedback-sdk-widget";
 // then place <feedback-widget endpoint="..." token="fbk_..."></feedback-widget>
 ```
 
@@ -188,7 +188,7 @@ git add packages/widget
 git commit -m "feat(widget): scaffold package and freeze public contract"
 ```
 
-Note: `npm install` at the repo root is required once so the workspace links `@feedback-sdk/widget` and pulls `happy-dom`/`vite`. Run `npm install` from the repo root after this commit (before Wave 1 tests).
+Note: `npm install` at the repo root is required once so the workspace links `feedback-sdk-widget` and pulls `happy-dom`/`vite`. Run `npm install` from the repo root after this commit (before Wave 1 tests).
 
 ---
 
@@ -637,7 +637,7 @@ Run:
 ```bash
 cd /Users/minhthiennguyen/Desktop/feedback-sdk
 npm install
-npm run build --workspace @feedback-sdk/widget
+npm run build --workspace feedback-sdk-widget
 ls packages/widget/dist
 ```
 Expected: `dist/feedback-widget.js` and `dist/feedback-widget.iife.js` exist.
@@ -661,7 +661,7 @@ git commit -m "feat(widget): add script-tag loader and vite library build"
 Repo: `/Users/minhthiennguyen/Desktop/Euno/euno-app`
 
 **Interfaces:**
-- Consumes: the `<feedback-widget>` custom element from `@feedback-sdk/widget` (installed in Task 6); env vars `VITE_FEEDBACK_ENDPOINT`, `VITE_FEEDBACK_TOKEN`.
+- Consumes: the `<feedback-widget>` custom element from `feedback-sdk-widget` (installed in Task 6); env vars `VITE_FEEDBACK_ENDPOINT`, `VITE_FEEDBACK_TOKEN`.
 - Produces: a `<FeedbackWidget />` React component that renders the element only when both env vars are set.
 
 - [ ] **Step 1: Create `src/feedback-widget.d.ts` (teach JSX the element)**
@@ -691,7 +691,7 @@ declare module "react" {
 - [ ] **Step 2: Create `src/FeedbackWidget.tsx`**
 
 ```tsx
-import "@feedback-sdk/widget";
+import "feedback-sdk-widget";
 
 // Renders the feedback button only when configured. Endpoint/token come from
 // build-time env so the token (public submit token) is safe to ship.
@@ -745,7 +745,7 @@ git commit -m "feat: add feedback widget to the authenticated app"
 Repo: `/Users/minhthiennguyen/Desktop/tony-todo-app`
 
 **Interfaces:**
-- Consumes: `<feedback-widget>` from `@feedback-sdk/widget` (installed in Task 6); env vars `VITE_FEEDBACK_ENDPOINT`, `VITE_FEEDBACK_TOKEN`.
+- Consumes: `<feedback-widget>` from `feedback-sdk-widget` (installed in Task 6); env vars `VITE_FEEDBACK_ENDPOINT`, `VITE_FEEDBACK_TOKEN`.
 - Produces: a Svelte component that renders the element when configured. This is the NEW SDK-backed widget; it does not remove the existing in-app `FeedbackWidget.svelte` (that stays until parity is confirmed).
 
 - [ ] **Step 1: Create `src/lib/components/FeedbackSdkWidget.svelte`**
@@ -753,7 +753,7 @@ Repo: `/Users/minhthiennguyen/Desktop/tony-todo-app`
 ```svelte
 <script>
   // Import registers the <feedback-widget> custom element as a side effect.
-  import "@feedback-sdk/widget";
+  import "feedback-sdk-widget";
 
   const endpoint = import.meta.env.VITE_FEEDBACK_ENDPOINT;
   const token = import.meta.env.VITE_FEEDBACK_TOKEN;
@@ -804,7 +804,7 @@ git commit -m "feat: add SDK-backed feedback widget alongside the built-in one"
 ```bash
 cd /Users/minhthiennguyen/Desktop/feedback-sdk
 npm install
-npm run build --workspace @feedback-sdk/widget
+npm run build --workspace feedback-sdk-widget
 cd packages/widget && npm pack
 # produces feedback-sdk-widget-0.0.0.tgz in packages/widget/
 ```

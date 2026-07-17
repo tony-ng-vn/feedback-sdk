@@ -53,7 +53,7 @@ Build the widget once, then serve the repo and open the demo page:
 
 ```bash
 cd /Users/minhthiennguyen/Desktop/feedback-sdk
-npm run build --workspace @feedback-sdk/widget
+npm run build --workspace feedback-sdk-widget
 npx http-server -p 8080 .        # or: python3 -m http.server 8080
 ```
 
@@ -71,7 +71,7 @@ local tarball.
 ```bash
 # build + pack the widget
 cd /Users/minhthiennguyen/Desktop/feedback-sdk
-npm run build --workspace @feedback-sdk/widget
+npm run build --workspace feedback-sdk-widget
 cd packages/widget && npm pack        # makes feedback-sdk-widget-0.0.0.tgz
 
 # Euno (React), on branch feat/feedback-widget

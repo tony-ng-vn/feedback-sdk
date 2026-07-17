@@ -1,4 +1,4 @@
-# @feedback-sdk/widget
+# feedback-sdk-widget
 
 A framework-agnostic feedback button. Renders in Shadow DOM; themeable via CSS custom properties.
 
@@ -20,7 +20,7 @@ A framework-agnostic feedback button. Renders in Shadow DOM; themeable via CSS c
 npm:
 
 ```js
-import "@feedback-sdk/widget";
+import "feedback-sdk-widget";
 // then place <feedback-widget endpoint="..." token="fbk_..."></feedback-widget>
 ```
 

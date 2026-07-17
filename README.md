@@ -40,7 +40,7 @@ npx convex dev
 npx convex run projects:create '{"slug":"myapp"}'
 
 # 3. build the widget and open the demo
-npm run build --workspace @feedback-sdk/widget
+npm run build --workspace feedback-sdk-widget
 npx http-server -p 8080 .
 #    open http://localhost:8080/examples/demo.html, paste $SITE + submit token,
 #    click Mount, use the Feedback button.
@@ -52,7 +52,7 @@ Full walkthrough, including wiring the widget into a real React/Svelte app:
 ## Using the widget in an app
 
 ```js
-import "@feedback-sdk/widget";
+import "feedback-sdk-widget";
 // then, anywhere in your markup:
 // <feedback-widget endpoint="https://your-service" token="fbk_myapp_..."></feedback-widget>
 ```
@@ -104,7 +104,7 @@ npm test                # 31 tests: service, client, widget
 
 ## Roadmap
 
-- Publish `@feedback-sdk/widget` to npm so any project installs it normally.
+- Publish `feedback-sdk-widget` to npm so any project installs it normally.
 - Deploy the service to a cloud Convex deployment for a public endpoint.
 - CLI: `npx feedback-sdk init` to provision a project and print keys.
 - MCP server so agents get `feedback_list` / `feedback_resolve` tools directly.
