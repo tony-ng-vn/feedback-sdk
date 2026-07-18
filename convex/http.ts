@@ -31,6 +31,11 @@ async function storeScreenshot(
     return { ok: false, error: "Screenshot must be a base64 image data URL" };
   }
   const [, mime, base64] = match;
+  // base64 encodes 3 bytes per 4 chars; reject clearly oversized payloads before
+  // decoding the whole thing into memory. The decoded check below is the exact one.
+  if (base64.length > (MAX_SCREENSHOT_BYTES / 3) * 4) {
+    return { ok: false, error: "Screenshot is too large (max 3 MB)" };
+  }
   let binary: string;
   try {
     binary = atob(base64);

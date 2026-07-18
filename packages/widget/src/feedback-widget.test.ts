@@ -131,6 +131,25 @@ test("attaching an image includes its data url in the submitted feedback", async
   expect(arg.screenshot.startsWith("data:image/png")).toBe(true);
 });
 
+test("an oversized image is rejected client-side and not attached", async () => {
+  const el = mount({ endpoint: "https://x.site", token: "fbk_x_1" });
+  (shadow(el).querySelector(".fw-fab") as HTMLButtonElement).click();
+
+  const fileInput = shadow(el).querySelector(".fw-file") as HTMLInputElement;
+  const big = new File([new Uint8Array(3_000_001)], "big.png", {
+    type: "image/png",
+  });
+  Object.defineProperty(fileInput, "files", { value: [big], configurable: true });
+  fileInput.dispatchEvent(new Event("change"));
+
+  await vi.waitFor(() =>
+    expect(shadow(el).querySelector(".fw-error")?.textContent).toContain(
+      "too large",
+    ),
+  );
+  expect(shadow(el).querySelector(".fw-preview")).toBeNull();
+});
+
 test("submit is a no-op when the message is empty", () => {
   const el = mount({ endpoint: "https://x.site", token: "fbk_x_1" });
   (shadow(el).querySelector(".fw-fab") as HTMLButtonElement).click();

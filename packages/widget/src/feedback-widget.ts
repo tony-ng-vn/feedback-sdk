@@ -3,6 +3,9 @@ import type { FeedbackSubmittedDetail } from "./types";
 
 type State = "idle" | "sending" | "sent" | "error";
 
+// Keep in step with the service's cap so the client rejects the same files.
+const MAX_SCREENSHOT_BYTES = 3_000_000; // 3 MB
+
 const STYLE = `
   :host {
     --fw-accent: #4f46e5;
@@ -207,7 +210,7 @@ export class FeedbackWidget extends HTMLElement {
           <textarea class="fw-input" rows="4" placeholder="What's on your mind?" ${sending || sent ? "disabled" : ""}>${escapeHtml(this.message)}</textarea>
           ${
             this.screenshot
-              ? `<div class="fw-preview"><img class="fw-thumb" alt="Attached screenshot" /><button class="fw-remove" type="button" aria-label="Remove screenshot">x</button></div>`
+              ? `<div class="fw-preview"><img class="fw-thumb" alt="Attached screenshot" /><button class="fw-remove" type="button" aria-label="Remove screenshot" ${sending || sent ? "disabled" : ""}>x</button></div>`
               : `<label class="fw-attach">Attach screenshot<input class="fw-file" type="file" accept="image/*" hidden ${sending || sent ? "disabled" : ""} /></label>`
           }
           ${this.state === "error" ? `<p class="fw-error" role="alert">${escapeHtml(this.errorMessage)}</p>` : ""}
@@ -246,6 +249,15 @@ export class FeedbackWidget extends HTMLElement {
     file?.addEventListener("change", () => {
       const chosen = file.files?.[0];
       if (!chosen) return;
+      // Reject oversized images here so we don't read a huge file into memory
+      // and round-trip to the server just to get a 400 back. Matches the
+      // server's 3 MB cap.
+      if (chosen.size > MAX_SCREENSHOT_BYTES) {
+        this.state = "error";
+        this.errorMessage = "Screenshot is too large (max 3 MB)";
+        this.render();
+        return;
+      }
       this.readAsDataUrl(chosen)
         .then((url) => {
           this.screenshot = url;
