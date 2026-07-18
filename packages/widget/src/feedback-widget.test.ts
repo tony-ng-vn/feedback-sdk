@@ -157,6 +157,23 @@ test("submit is a no-op when the message is empty", () => {
   expect(submitMock).not.toHaveBeenCalled();
 });
 
+test("embed: everything renders inside the shadow root, nothing leaks to the page", () => {
+  const headStylesBefore = document.head.querySelectorAll("style").length;
+  const el = mount({ endpoint: "https://x.site", token: "fbk_x_1" });
+  (shadow(el).querySelector(".fw-fab") as HTMLButtonElement).click();
+  // The host app's document must stay untouched: no widget nodes outside the
+  // shadow root and no styles injected into the page head.
+  expect(document.querySelector(".fw-panel")).toBeNull();
+  expect(document.querySelector(".fw-fab")).toBeNull();
+  expect(document.head.querySelectorAll("style").length).toBe(headStylesBefore);
+});
+
+test("embed: the module leaves no widget globals on window", () => {
+  const w = window as unknown as Record<string, unknown>;
+  expect(w.FeedbackWidget).toBeUndefined();
+  expect(w.feedbackWidget).toBeUndefined();
+});
+
 test("markup in a server error message is escaped, not injected", async () => {
   submitMock.mockRejectedValue(new Error("<img src=x onerror=window.__xss=1>"));
   (window as unknown as { __xss?: number }).__xss = undefined;

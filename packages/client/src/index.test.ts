@@ -58,6 +58,36 @@ test("submitFeedback omits the screenshot key when not provided", async () => {
   expect("screenshot" in JSON.parse(init.body)).toBe(false);
 });
 
+test("contract: the client only sends keys the service is committed to accept", async () => {
+  const fetchImpl = okFetch({ id: "fb_1" });
+  await submitFeedback({
+    endpoint: "https://x.convex.site",
+    token: "fbk_euno_secret",
+    message: "everything set",
+    category: "bug",
+    pageContext: "/p",
+    metadata: { a: 1 },
+    submitter: "u@x.io",
+    screenshot: "data:image/png;base64,AAAA",
+    fetchImpl: fetchImpl as unknown as typeof fetch,
+  });
+  const [, init] = fetchImpl.mock.calls[0];
+  // The service accepts these keys forever; a rename here silently breaks
+  // every app pinned to an older service expectation. Additions require a
+  // matching (optional, additive) service change first.
+  const frozenKeys = [
+    "message",
+    "category",
+    "pageContext",
+    "metadata",
+    "submitter",
+    "screenshot",
+  ];
+  for (const key of Object.keys(JSON.parse(init.body))) {
+    expect(frozenKeys).toContain(key);
+  }
+});
+
 test("submitFeedback throws the server error message on failure", async () => {
   const fetchImpl = vi.fn(async () =>
     new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 }),
