@@ -1,11 +1,12 @@
-import type { FeedbackCategory } from "@feedback-sdk/client";
+// The default categories the widget offers. Defined here (rather than imported
+// from @feedback-sdk/client) so the published widget's types are self-contained:
+// the client package is a build-time dependency, not published to npm.
+export type FeedbackCategory = "idea" | "bug" | "other";
 
 // The event a host can listen for after a successful submit.
 export interface FeedbackSubmittedDetail {
   id: string;
 }
-
-export type { FeedbackCategory };
 
 // Names of the CSS custom properties the widget exposes for theming.
 export const THEME_VARS = [
