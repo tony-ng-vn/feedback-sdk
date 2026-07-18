@@ -1,6 +1,6 @@
 {
   "name": "feedback-sdk-widget",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A framework-agnostic feedback button whose inbox is an agent work queue.",
   "type": "module",
   "license": "MIT",
@@ -40,6 +40,7 @@
   "devDependencies": {
     "@feedback-sdk/client": "0.0.0",
     "happy-dom": "^20.10.6",
-    "vite": "^7.0.0"
+    "vite": "^7.0.0",
+    "vite-plugin-dts": "^5.0.3"
   }
 }
