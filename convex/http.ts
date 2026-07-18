@@ -11,6 +11,41 @@ import type { Id } from "./_generated/dataModel";
 const MAX_CATEGORY_LEN = 50;
 const STATUSES = ["new", "in_progress", "done"];
 
+// Attached screenshots arrive as a base64 image data URL. Cap the decoded size
+// so a submit token (public, embeddable) can't be used to dump large blobs.
+const MAX_SCREENSHOT_BYTES = 3_000_000; // 3 MB
+const DATA_URL = /^data:(image\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/;
+
+type StoreResult =
+  | { ok: true; storageId: Id<"_storage"> }
+  | { ok: false; error: string };
+
+// Validate an image data URL and put it in file storage. Rejects anything that
+// is not an image or is over the size cap, so callers can turn it into a 400.
+async function storeScreenshot(
+  ctx: ActionCtx,
+  value: string,
+): Promise<StoreResult> {
+  const match = DATA_URL.exec(value);
+  if (match === null) {
+    return { ok: false, error: "Screenshot must be a base64 image data URL" };
+  }
+  const [, mime, base64] = match;
+  let binary: string;
+  try {
+    binary = atob(base64);
+  } catch {
+    return { ok: false, error: "Screenshot is not valid base64" };
+  }
+  if (binary.length > MAX_SCREENSHOT_BYTES) {
+    return { ok: false, error: "Screenshot is too large (max 3 MB)" };
+  }
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const storageId = await ctx.storage.store(new Blob([bytes], { type: mime }));
+  return { ok: true, storageId };
+}
+
 // The widget runs on the host app's origin and calls this service cross-origin
 // with an Authorization header, so browsers send a CORS preflight. Allow any
 // origin: writes are gated by the submit token, reads by the admin key, not by
@@ -79,6 +114,16 @@ const submit = httpAction(async (ctx, request) => {
       ? null
       : JSON.stringify(body.metadata);
 
+  let screenshotStorageId: Id<"_storage"> | null = null;
+  if (body.screenshot !== undefined && body.screenshot !== null) {
+    if (typeof body.screenshot !== "string") {
+      return json({ error: "Screenshot must be a string" }, 400);
+    }
+    const stored = await storeScreenshot(ctx, body.screenshot);
+    if (!stored.ok) return json({ error: stored.error }, 400);
+    screenshotStorageId = stored.storageId;
+  }
+
   const id = await ctx.runMutation(internal.feedback.insert, {
     projectId,
     category,
@@ -86,6 +131,7 @@ const submit = httpAction(async (ctx, request) => {
     pageContext,
     metadata,
     submitter,
+    screenshotStorageId,
   });
   return json({ id }, 200);
 });
@@ -99,7 +145,17 @@ const list = httpAction(async (ctx, request) => {
     projectId,
     status,
   });
-  return json({ feedback }, 200);
+  // Resolve each attached screenshot to a fetchable URL so an agent can pull
+  // the image directly; rows without one report null.
+  const withUrls = await Promise.all(
+    feedback.map(async (row) => ({
+      ...row,
+      screenshotUrl: row.screenshotStorageId
+        ? await ctx.storage.getUrl(row.screenshotStorageId)
+        : null,
+    })),
+  );
+  return json({ feedback: withUrls }, 200);
 });
 
 const resolve = httpAction(async (ctx, request) => {

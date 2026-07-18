@@ -50,6 +50,16 @@ const STYLE = `
     background: var(--fw-accent); color: #fff; font-size: 13px; font-weight: 600;
     cursor: pointer; }
   .fw-submit:disabled { opacity: 0.55; cursor: default; }
+  .fw-attach { display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--fw-muted); cursor: pointer; width: fit-content;
+    border: 1px dashed var(--fw-border); border-radius: 8px; padding: 6px 10px; }
+  .fw-attach:hover { color: var(--fw-text); border-color: var(--fw-accent); }
+  .fw-preview { position: relative; width: fit-content; }
+  .fw-thumb { display: block; max-height: 92px; max-width: 100%;
+    border-radius: 8px; border: 1px solid var(--fw-border); }
+  .fw-remove { position: absolute; top: -8px; right: -8px; width: 20px; height: 20px;
+    border-radius: 50%; border: 0; background: var(--fw-text); color: var(--fw-surface);
+    font-size: 12px; line-height: 1; cursor: pointer; }
   [hidden] { display: none !important; }
 `;
 
@@ -72,6 +82,8 @@ export class FeedbackWidget extends HTMLElement {
   private category = "";
   private message = "";
   private errorMessage = "";
+  // Optional attached screenshot as a base64 image data URL.
+  private screenshot: string | null = null;
 
   constructor() {
     super();
@@ -122,6 +134,15 @@ export class FeedbackWidget extends HTMLElement {
     this.render();
   }
 
+  private readAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+
   private async doSubmit(): Promise<void> {
     const trimmed = this.message.trim();
     if (trimmed === "" || this.state === "sending") return;
@@ -136,9 +157,11 @@ export class FeedbackWidget extends HTMLElement {
         category: this.category as never,
         pageContext: this.pageContext,
         submitter: this.submitter,
+        screenshot: this.screenshot ?? undefined,
       });
       this.state = "sent";
       this.message = "";
+      this.screenshot = null;
       const detail: FeedbackSubmittedDetail = { id: result.id };
       this.dispatchEvent(
         new CustomEvent("feedback-submitted", {
@@ -182,6 +205,11 @@ export class FeedbackWidget extends HTMLElement {
           </div>
           <div class="fw-chips">${chips}</div>
           <textarea class="fw-input" rows="4" placeholder="What's on your mind?" ${sending || sent ? "disabled" : ""}>${escapeHtml(this.message)}</textarea>
+          ${
+            this.screenshot
+              ? `<div class="fw-preview"><img class="fw-thumb" alt="Attached screenshot" /><button class="fw-remove" type="button" aria-label="Remove screenshot">x</button></div>`
+              : `<label class="fw-attach">Attach screenshot<input class="fw-file" type="file" accept="image/*" hidden ${sending || sent ? "disabled" : ""} /></label>`
+          }
           ${this.state === "error" ? `<p class="fw-error" role="alert">${escapeHtml(this.errorMessage)}</p>` : ""}
           <button class="fw-submit" ${this.message.trim() === "" || sending || sent ? "disabled" : ""}>${submitLabel}</button>
         </div>
@@ -205,6 +233,28 @@ export class FeedbackWidget extends HTMLElement {
     this.root
       .querySelector(".fw-submit")
       ?.addEventListener("click", () => void this.doSubmit());
+
+    // Set the preview src as a property (never interpolated) and wire removal.
+    const thumb = this.root.querySelector(".fw-thumb") as HTMLImageElement | null;
+    if (thumb && this.screenshot) thumb.src = this.screenshot;
+    this.root.querySelector(".fw-remove")?.addEventListener("click", () => {
+      this.screenshot = null;
+      this.render();
+    });
+
+    const file = this.root.querySelector(".fw-file") as HTMLInputElement | null;
+    file?.addEventListener("change", () => {
+      const chosen = file.files?.[0];
+      if (!chosen) return;
+      this.readAsDataUrl(chosen)
+        .then((url) => {
+          this.screenshot = url;
+          this.render();
+        })
+        .catch(() => {
+          /* if the file can't be read, just leave the form as-is */
+        });
+    });
   }
 }
 

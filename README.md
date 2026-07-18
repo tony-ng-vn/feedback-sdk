@@ -95,6 +95,11 @@ Attributes:
 - theming: override `--fw-accent`, `--fw-surface`, `--fw-text`, `--fw-radius`, and friends
 - fires `feedback-submitted` (`CustomEvent<{ id: string }>`) on success
 
+The panel has an "Attach screenshot" control: the submitter can attach an image
+(a screenshot they took) so the agent gets visual context alongside the text.
+The image is stored in the service, and each row in the read below carries a
+`screenshotUrl` (or `null`) the agent can fetch. Max 3 MB per image.
+
 The public submit token is safe to ship in your app. The admin key is not -- it
 stays in your terminal/agent.
 

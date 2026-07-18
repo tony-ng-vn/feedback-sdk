@@ -22,6 +22,9 @@ export default defineSchema({
     // JSON stringified freeform blob from the host app.
     metadata: v.union(v.string(), v.null()),
     submitter: v.union(v.string(), v.null()),
+    // Optional image the submitter attached (a screenshot), kept in file
+    // storage. Optional so rows written before this feature stay valid.
+    screenshotStorageId: v.optional(v.union(v.id("_storage"), v.null())),
     status: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),

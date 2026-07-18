@@ -145,6 +145,60 @@ test("delete removes a row and is rejected for another project", async () => {
   expect(await t.run((ctx) => ctx.db.get(id))).toBeNull();
 });
 
+// A real (tiny) 1x1 transparent PNG, so the stored blob is a valid image.
+const PNG_1x1 =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HBAAAAAA" +
+  "C0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+
+test("submit stores an attached screenshot and list returns a screenshotUrl", async () => {
+  const t = convexTest(schema, modules);
+  const euno = await project(t, "euno");
+  const res = await submit(t, euno.submitToken, {
+    message: "see this glitch",
+    screenshot: PNG_1x1,
+  });
+  expect(res.status).toBe(200);
+  const { id } = (await res.json()) as { id: Id<"feedback"> };
+
+  const row = await t.run((ctx) => ctx.db.get(id));
+  expect(row?.screenshotStorageId).toBeTruthy();
+
+  const list = await t.fetch("/feedback", {
+    headers: { Authorization: `Bearer ${euno.adminKey}` },
+  });
+  const { feedback } = await list.json();
+  expect(feedback[0].screenshotUrl).toBeTruthy();
+});
+
+test("feedback without a screenshot reports a null screenshotUrl", async () => {
+  const t = convexTest(schema, modules);
+  const euno = await project(t, "euno");
+  await submit(t, euno.submitToken, { message: "no shot here" });
+  const list = await t.fetch("/feedback", {
+    headers: { Authorization: `Bearer ${euno.adminKey}` },
+  });
+  const { feedback } = await list.json();
+  expect(feedback[0].screenshotUrl).toBeNull();
+});
+
+test("submit rejects an oversized screenshot with 400", async () => {
+  const t = convexTest(schema, modules);
+  const euno = await project(t, "euno");
+  const big = "data:image/png;base64," + "A".repeat(5_000_000);
+  const res = await submit(t, euno.submitToken, { message: "big", screenshot: big });
+  expect(res.status).toBe(400);
+});
+
+test("submit rejects a non-image screenshot with 400", async () => {
+  const t = convexTest(schema, modules);
+  const euno = await project(t, "euno");
+  const res = await submit(t, euno.submitToken, {
+    message: "sneaky",
+    screenshot: "data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==",
+  });
+  expect(res.status).toBe(400);
+});
+
 test("CORS preflight and responses carry allow-origin headers", async () => {
   const t = convexTest(schema, modules);
   const euno = await project(t, "euno");
