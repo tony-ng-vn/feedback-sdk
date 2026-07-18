@@ -1,6 +1,6 @@
 {
   "name": "feedback-sdk-widget",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A framework-agnostic feedback button whose inbox is an agent work queue.",
   "type": "module",
   "license": "MIT",
@@ -10,7 +10,14 @@
     "url": "git+https://github.com/tony-ng-vn/feedback-sdk.git",
     "directory": "packages/widget"
   },
-  "keywords": ["feedback", "widget", "web-component", "custom-element", "convex", "agent"],
+  "keywords": [
+    "feedback",
+    "widget",
+    "web-component",
+    "custom-element",
+    "convex",
+    "agent"
+  ],
   "main": "dist/feedback-widget.js",
   "module": "dist/feedback-widget.js",
   "types": "dist/index.d.ts",
@@ -21,7 +28,10 @@
     },
     "./iife": "./dist/feedback-widget.iife.js"
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "vite build",
     "prepack": "npm run build",
