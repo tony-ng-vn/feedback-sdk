@@ -8,6 +8,8 @@ export interface SubmitFeedbackOptions {
   pageContext?: string;
   metadata?: Record<string, unknown>;
   submitter?: string;
+  // Optional screenshot as a base64 image data URL (e.g. "data:image/png;base64,...").
+  screenshot?: string;
   // Injectable for tests; defaults to the global fetch.
   fetchImpl?: typeof fetch;
 }
@@ -23,6 +25,7 @@ export async function submitFeedback(
   if (options.pageContext !== undefined) body.pageContext = options.pageContext;
   if (options.metadata !== undefined) body.metadata = options.metadata;
   if (options.submitter !== undefined) body.submitter = options.submitter;
+  if (options.screenshot !== undefined) body.screenshot = options.screenshot;
 
   const response = await doFetch(`${options.endpoint}/submit`, {
     method: "POST",

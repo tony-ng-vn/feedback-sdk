@@ -1,0 +1,50 @@
+name: Bug report
+description: Something does not work the way it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file this. A report we can reproduce gets
+        fixed; one we cannot usually gets closed. Please fill in every field.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you do, and what went wrong?
+      placeholder: I submitted feedback with a screenshot and the read returned a null screenshotUrl.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: The exact steps, commands, or code. A reproduction is the single most useful thing you can give us.
+      placeholder: |
+        1. npx convex run projects:create '{"slug":"x"}'
+        2. curl -X POST $SITE/submit -H "Authorization: Bearer $SUBMIT" -d '...'
+        3. curl $SITE/feedback -H "Authorization: Bearer $ADMIN"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: The feedback-sdk-widget version or the commit SHA you are on.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: I have written the steps above so someone else can reproduce it.
+          required: true

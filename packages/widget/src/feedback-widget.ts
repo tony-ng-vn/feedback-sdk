@@ -3,6 +3,9 @@ import type { FeedbackSubmittedDetail } from "./types";
 
 type State = "idle" | "sending" | "sent" | "error";
 
+// Keep in step with the service's cap so the client rejects the same files.
+const MAX_SCREENSHOT_BYTES = 3_000_000; // 3 MB
+
 const STYLE = `
   :host {
     --fw-accent: #4f46e5;
@@ -50,6 +53,16 @@ const STYLE = `
     background: var(--fw-accent); color: #fff; font-size: 13px; font-weight: 600;
     cursor: pointer; }
   .fw-submit:disabled { opacity: 0.55; cursor: default; }
+  .fw-attach { display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--fw-muted); cursor: pointer; width: fit-content;
+    border: 1px dashed var(--fw-border); border-radius: 8px; padding: 6px 10px; }
+  .fw-attach:hover { color: var(--fw-text); border-color: var(--fw-accent); }
+  .fw-preview { position: relative; width: fit-content; }
+  .fw-thumb { display: block; max-height: 92px; max-width: 100%;
+    border-radius: 8px; border: 1px solid var(--fw-border); }
+  .fw-remove { position: absolute; top: -8px; right: -8px; width: 20px; height: 20px;
+    border-radius: 50%; border: 0; background: var(--fw-text); color: var(--fw-surface);
+    font-size: 12px; line-height: 1; cursor: pointer; }
   [hidden] { display: none !important; }
 `;
 
@@ -72,6 +85,8 @@ export class FeedbackWidget extends HTMLElement {
   private category = "";
   private message = "";
   private errorMessage = "";
+  // Optional attached screenshot as a base64 image data URL.
+  private screenshot: string | null = null;
 
   constructor() {
     super();
@@ -122,6 +137,15 @@ export class FeedbackWidget extends HTMLElement {
     this.render();
   }
 
+  private readAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+
   private async doSubmit(): Promise<void> {
     const trimmed = this.message.trim();
     if (trimmed === "" || this.state === "sending") return;
@@ -136,9 +160,11 @@ export class FeedbackWidget extends HTMLElement {
         category: this.category as never,
         pageContext: this.pageContext,
         submitter: this.submitter,
+        screenshot: this.screenshot ?? undefined,
       });
       this.state = "sent";
       this.message = "";
+      this.screenshot = null;
       const detail: FeedbackSubmittedDetail = { id: result.id };
       this.dispatchEvent(
         new CustomEvent("feedback-submitted", {
@@ -182,6 +208,11 @@ export class FeedbackWidget extends HTMLElement {
           </div>
           <div class="fw-chips">${chips}</div>
           <textarea class="fw-input" rows="4" placeholder="What's on your mind?" ${sending || sent ? "disabled" : ""}>${escapeHtml(this.message)}</textarea>
+          ${
+            this.screenshot
+              ? `<div class="fw-preview"><img class="fw-thumb" alt="Attached screenshot" /><button class="fw-remove" type="button" aria-label="Remove screenshot" ${sending || sent ? "disabled" : ""}>x</button></div>`
+              : `<label class="fw-attach">Attach screenshot<input class="fw-file" type="file" accept="image/*" hidden ${sending || sent ? "disabled" : ""} /></label>`
+          }
           ${this.state === "error" ? `<p class="fw-error" role="alert">${escapeHtml(this.errorMessage)}</p>` : ""}
           <button class="fw-submit" ${this.message.trim() === "" || sending || sent ? "disabled" : ""}>${submitLabel}</button>
         </div>
@@ -205,6 +236,37 @@ export class FeedbackWidget extends HTMLElement {
     this.root
       .querySelector(".fw-submit")
       ?.addEventListener("click", () => void this.doSubmit());
+
+    // Set the preview src as a property (never interpolated) and wire removal.
+    const thumb = this.root.querySelector(".fw-thumb") as HTMLImageElement | null;
+    if (thumb && this.screenshot) thumb.src = this.screenshot;
+    this.root.querySelector(".fw-remove")?.addEventListener("click", () => {
+      this.screenshot = null;
+      this.render();
+    });
+
+    const file = this.root.querySelector(".fw-file") as HTMLInputElement | null;
+    file?.addEventListener("change", () => {
+      const chosen = file.files?.[0];
+      if (!chosen) return;
+      // Reject oversized images here so we don't read a huge file into memory
+      // and round-trip to the server just to get a 400 back. Matches the
+      // server's 3 MB cap.
+      if (chosen.size > MAX_SCREENSHOT_BYTES) {
+        this.state = "error";
+        this.errorMessage = "Screenshot is too large (max 3 MB)";
+        this.render();
+        return;
+      }
+      this.readAsDataUrl(chosen)
+        .then((url) => {
+          this.screenshot = url;
+          this.render();
+        })
+        .catch(() => {
+          /* if the file can't be read, just leave the form as-is */
+        });
+    });
   }
 }
 

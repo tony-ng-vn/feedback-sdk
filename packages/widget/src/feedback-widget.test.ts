@@ -104,6 +104,52 @@ test("a failed submit shows the error message and does not throw", async () => {
   );
 });
 
+test("attaching an image includes its data url in the submitted feedback", async () => {
+  submitMock.mockResolvedValue({ id: "fb_img" });
+  const el = mount({ endpoint: "https://x.site", token: "fbk_x_1" });
+  (shadow(el).querySelector(".fw-fab") as HTMLButtonElement).click();
+  const textarea = shadow(el).querySelector(".fw-input") as HTMLTextAreaElement;
+  textarea.value = "with a shot";
+  textarea.dispatchEvent(new Event("input"));
+
+  const fileInput = shadow(el).querySelector(".fw-file") as HTMLInputElement;
+  const file = new File([new Uint8Array([1, 2, 3, 4])], "shot.png", {
+    type: "image/png",
+  });
+  Object.defineProperty(fileInput, "files", { value: [file], configurable: true });
+  fileInput.dispatchEvent(new Event("change"));
+
+  // The preview appears once the file is read as a data url.
+  await vi.waitFor(() =>
+    expect(shadow(el).querySelector(".fw-preview")).toBeTruthy(),
+  );
+
+  (shadow(el).querySelector(".fw-submit") as HTMLButtonElement).click();
+  await vi.waitFor(() => expect(submitMock).toHaveBeenCalledTimes(1));
+  const arg = submitMock.mock.calls[0][0];
+  expect(typeof arg.screenshot).toBe("string");
+  expect(arg.screenshot.startsWith("data:image/png")).toBe(true);
+});
+
+test("an oversized image is rejected client-side and not attached", async () => {
+  const el = mount({ endpoint: "https://x.site", token: "fbk_x_1" });
+  (shadow(el).querySelector(".fw-fab") as HTMLButtonElement).click();
+
+  const fileInput = shadow(el).querySelector(".fw-file") as HTMLInputElement;
+  const big = new File([new Uint8Array(3_000_001)], "big.png", {
+    type: "image/png",
+  });
+  Object.defineProperty(fileInput, "files", { value: [big], configurable: true });
+  fileInput.dispatchEvent(new Event("change"));
+
+  await vi.waitFor(() =>
+    expect(shadow(el).querySelector(".fw-error")?.textContent).toContain(
+      "too large",
+    ),
+  );
+  expect(shadow(el).querySelector(".fw-preview")).toBeNull();
+});
+
 test("submit is a no-op when the message is empty", () => {
   const el = mount({ endpoint: "https://x.site", token: "fbk_x_1" });
   (shadow(el).querySelector(".fw-fab") as HTMLButtonElement).click();

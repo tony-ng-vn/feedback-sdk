@@ -33,6 +33,31 @@ test("submitFeedback posts to /submit with the bearer token and body", async () 
   });
 });
 
+test("submitFeedback includes a screenshot data url when provided", async () => {
+  const fetchImpl = okFetch({ id: "fb_1" });
+  await submitFeedback({
+    endpoint: "https://x.convex.site",
+    token: "fbk_euno_secret",
+    message: "look at this",
+    screenshot: "data:image/png;base64,AAAA",
+    fetchImpl: fetchImpl as unknown as typeof fetch,
+  });
+  const [, init] = fetchImpl.mock.calls[0];
+  expect(JSON.parse(init.body).screenshot).toBe("data:image/png;base64,AAAA");
+});
+
+test("submitFeedback omits the screenshot key when not provided", async () => {
+  const fetchImpl = okFetch({ id: "fb_1" });
+  await submitFeedback({
+    endpoint: "https://x.convex.site",
+    token: "fbk_euno_secret",
+    message: "no shot",
+    fetchImpl: fetchImpl as unknown as typeof fetch,
+  });
+  const [, init] = fetchImpl.mock.calls[0];
+  expect("screenshot" in JSON.parse(init.body)).toBe(false);
+});
+
 test("submitFeedback throws the server error message on failure", async () => {
   const fetchImpl = vi.fn(async () =>
     new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 }),

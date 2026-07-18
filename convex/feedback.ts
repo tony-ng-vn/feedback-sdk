@@ -35,6 +35,7 @@ export const insert = internalMutation({
     pageContext: v.union(v.string(), v.null()),
     metadata: v.union(v.string(), v.null()),
     submitter: v.union(v.string(), v.null()),
+    screenshotStorageId: v.optional(v.union(v.id("_storage"), v.null())),
   },
   returns: v.id("feedback"),
   handler: async (ctx, args) => {
@@ -46,6 +47,7 @@ export const insert = internalMutation({
       pageContext: args.pageContext,
       metadata: args.metadata,
       submitter: args.submitter,
+      screenshotStorageId: args.screenshotStorageId ?? null,
       status: "new",
       createdAt: now,
       updatedAt: now,
