@@ -1,0 +1,7 @@
+# Force people through the templates above; a blank textarea invites low-effort
+# reports that cannot be acted on.
+blank_issues_enabled: false
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/tony-ng-vn/feedback-sdk/discussions
+    about: For usage questions and open-ended ideas, start a discussion instead of an issue.
