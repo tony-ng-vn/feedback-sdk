@@ -1,0 +1,35 @@
+{
+  "name": "feedback-sdk-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that puts a feedback-sdk project's queue directly in an agent's toolset.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://github.com/tony-ng-vn/feedback-sdk",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tony-ng-vn/feedback-sdk.git",
+    "directory": "packages/mcp"
+  },
+  "keywords": [
+    "feedback",
+    "mcp",
+    "model-context-protocol",
+    "agent",
+    "convex"
+  ],
+  "main": "src/server.js",
+  "bin": {
+    "feedback-sdk-mcp": "bin.js"
+  },
+  "files": [
+    "bin.js",
+    "src"
+  ],
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
+  }
+}
