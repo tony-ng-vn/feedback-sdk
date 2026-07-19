@@ -209,6 +209,38 @@ const del = httpAction(async (ctx, request) => {
   return json({ ok: true }, 200);
 });
 
+// Owner-only self-serve provisioning: mints a project's tokens over HTTP so an
+// integrating app never needs a repo checkout or deploy credentials. Disabled
+// by default -- unset FEEDBACK_OWNER_KEY means no one can provision.
+const provision = httpAction(async (ctx, request) => {
+  const ownerKey = process.env.FEEDBACK_OWNER_KEY;
+  if (!ownerKey) {
+    return json({ error: "Provisioning is not enabled" }, 404);
+  }
+
+  const token = bearerToken(request);
+  if (token === null) return json({ error: "Unauthorized" }, 401);
+  const [tokenHash, ownerHash] = await Promise.all([
+    sha256Hex(token),
+    sha256Hex(ownerKey),
+  ]);
+  if (tokenHash !== ownerHash) return json({ error: "Unauthorized" }, 401);
+
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "Invalid JSON" }, 400);
+  }
+
+  const slug = typeof body.slug === "string" ? body.slug.trim() : "";
+  if (slug === "") return json({ error: "Slug is required" }, 400);
+
+  const result = await ctx.runMutation(internal.projects.createInternal, { slug });
+  if (result === null) return json({ error: "Project already exists" }, 409);
+  return json(result, 200);
+});
+
 const http = httpRouter();
 http.route({ path: "/submit", method: "POST", handler: submit });
 http.route({ path: "/submit", method: "OPTIONS", handler: preflight });
@@ -218,5 +250,7 @@ http.route({ path: "/feedback/resolve", method: "POST", handler: resolve });
 http.route({ path: "/feedback/resolve", method: "OPTIONS", handler: preflight });
 http.route({ path: "/feedback/delete", method: "POST", handler: del });
 http.route({ path: "/feedback/delete", method: "OPTIONS", handler: preflight });
+// No OPTIONS route: this is a curl/terminal endpoint, not one the browser widget calls.
+http.route({ path: "/projects", method: "POST", handler: provision });
 
 export default http;
