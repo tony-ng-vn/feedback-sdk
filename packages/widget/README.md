@@ -17,11 +17,42 @@ A framework-agnostic feedback button. Renders in Shadow DOM; themeable via CSS c
 
 ## Usage
 
-npm:
+This package is only the widget. `endpoint` and `token` come from a running
+feedback-sdk service -- ask its owner for them, or see
+[`INTEGRATING.md`](https://github.com/tony-ng-vn/feedback-sdk/blob/main/INTEGRATING.md)
+in the main repo for the full playbook. You do not need that repo's source to
+use this package.
+
+The widget is a browser custom element (`class extends HTMLElement`). **Import
+it on the client only.** A top-level import crashes any server-rendering
+framework (Next.js, SvelteKit, Nuxt) because `HTMLElement` does not exist on
+the server.
+
+Plain client-side app (Vite/CRA, no SSR):
 
 ```js
 import "feedback-sdk-widget";
 // then place <feedback-widget endpoint="..." token="fbk_..."></feedback-widget>
+```
+
+React / Next.js -- import in an effect:
+
+```jsx
+import { useEffect } from "react";
+export function Feedback({ endpoint, token }) {
+  useEffect(() => { import("feedback-sdk-widget"); }, []);
+  return <feedback-widget endpoint={endpoint} token={token} />;
+}
+```
+
+SvelteKit -- import in `onMount` (browser only):
+
+```svelte
+<script>
+  import { onMount } from "svelte";
+  onMount(() => import("feedback-sdk-widget"));
+</script>
+<feedback-widget {endpoint} {token}></feedback-widget>
 ```
 
 script tag (self-mounts a floating button from data-attrs):
