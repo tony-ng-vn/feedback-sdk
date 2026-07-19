@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Tests, build, size budget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run the full test suite (service, client, widget, contracts)
+        run: npm test
+      - name: Build the widget
+        run: npm run build -w feedback-sdk-widget
+      - name: Enforce the bundle size budget
+        run: node scripts/check-widget-size.mjs
+
+  package:
+    name: Clean-room install of the packed tarball
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Pack the widget exactly as npm publish would
+        run: |
+          cd packages/widget
+          npm pack
+          echo "TARBALL=$(ls feedback-sdk-widget-*.tgz)" >> "$GITHUB_ENV"
+      - name: Install the tarball into a fresh project
+        run: |
+          mkdir /tmp/consumer && cd /tmp/consumer
+          npm init -y
+          npm install "$GITHUB_WORKSPACE/packages/widget/$TARBALL" typescript
+      - name: The ESM entry must import and register the element
+        run: |
+          cd /tmp/consumer
+          node --input-type=module -e "
+            let defined = null;
+            globalThis.customElements = { get: () => undefined, define: (n) => { defined = n; } };
+            globalThis.HTMLElement = class {};
+            await import('feedback-sdk-widget');
+            if (defined !== 'feedback-widget') { throw new Error('custom element was not registered: ' + defined); }
+            console.log('registered', defined);
+          "
+      - name: A strict TypeScript consumer must type-check
+        run: |
+          cd /tmp/consumer
+          cat > consumer.ts <<'EOF'
+          import { FeedbackWidget } from "feedback-sdk-widget";
+          import type { FeedbackSubmittedDetail, FeedbackCategory } from "feedback-sdk-widget";
+          const category: FeedbackCategory = "bug";
+          const detail: FeedbackSubmittedDetail = { id: "fb_1" };
+          console.log(FeedbackWidget, category, detail);
+          EOF
+          npx tsc --noEmit --strict --moduleResolution bundler --module esnext --target esnext consumer.ts
+          echo "types resolve OK"
