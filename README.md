@@ -29,31 +29,69 @@ docs/design/       the design spec
 docs/plans/        the phased implementation plans
 ```
 
-## Quickstart (local, ~2 minutes)
+## Quickstart
+
+**You deploy the service once.**
+**Every app after that is `npm install` plus two env vars.**
+
+If you are wiring an existing app to a service someone else already runs, skip straight to [`INTEGRATING.md`](INTEGRATING.md) -- you do not need this repo at all.
+
+### (a) Run the service (once, owner only)
 
 ```bash
-# 1. start the service (leave running; local, no login)
 npx convex dev
-#    copy CONVEX_SITE_URL from .env.local  -> this is your $SITE
-
-# 2. create a project -> prints a submit token (public) and admin key (secret)
-npx convex run projects:create '{"slug":"myapp"}'
-
-# 3. build the widget and open the demo
-npm run build --workspace feedback-sdk-widget
-npx http-server -p 8080 .
-#    open http://localhost:8080/examples/demo.html, paste $SITE + submit token,
-#    click Mount, use the Feedback button.
+#    leave this running; copy CONVEX_SITE_URL from .env.local -> this is your $SITE
 ```
 
-Full walkthrough, including wiring the widget into a real React/Svelte app:
-[`docs/TESTING.md`](docs/TESTING.md).
+That's it. One deployment serves every app you add below.
 
-## Using the widget in an app
+### (b) Add an app to your service
+
+Each app gets its own project: a public **submit token** and a secret **admin key**.
+Two ways to mint one:
+
+**Over HTTP, with the owner key (no repo checkout needed):**
+
+```bash
+# once: turn on provisioning for your deployment
+npx convex env set FEEDBACK_OWNER_KEY <a-long-random-string>
+
+# then, from anywhere, including from an agent with no Convex access:
+curl -s -X POST "$SITE/projects" \
+  -H "Authorization: Bearer <your-FEEDBACK_OWNER_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{"slug":"myapp"}'
+# -> { "projectId", "submitToken", "adminKey" }
+```
+
+`FEEDBACK_OWNER_KEY` is unset by default, so `/projects` returns 404 until you opt in.
+
+**From a checkout of this repo (the original path, still works):**
+
+```bash
+npx convex run projects:create '{"slug":"myapp"}'
+```
+
+### (c) Integrate the widget in the app
 
 ```bash
 npm install feedback-sdk-widget
 ```
+
+Set two env vars in the app: the service URL (`$SITE`, i.e. `CONVEX_SITE_URL`) and the submit token from step (b).
+Then mount the tag:
+
+```js
+import "feedback-sdk-widget";
+// <feedback-widget endpoint={SITE} token={SUBMIT_TOKEN}></feedback-widget>
+```
+
+**The integrating app never clones this repo and never touches Convex.**
+See [`INTEGRATING.md`](INTEGRATING.md) for the full playbook, including the SSR-safe import pattern for React/Svelte/Next.js and the agent read/resolve loop.
+
+Full local walkthrough, including the demo page: [`docs/TESTING.md`](docs/TESTING.md).
+
+## Using the widget in an app
 
 The widget is a browser custom element (`class extends HTMLElement`). **Import it
 on the client only** -- importing at module top level crashes any server-rendering
@@ -135,18 +173,23 @@ feedback for `myapp` and fix the top item."
   never read another's feedback.
 - The submit endpoint sends CORS headers so the browser widget can post
   cross-origin; tokens, not origin, are the security boundary.
+- The `POST /projects` provisioning endpoint is a third, separate key
+  (`FEEDBACK_OWNER_KEY`, a deployment env var, never in the widget or the
+  app). Unset by default -- provisioning is opt-in, not on by default.
 
 ## Development
 
 ```bash
 npm install
 npx convex dev --once   # generate the API / deploy locally
-npm test                # 31 tests: service, client, widget
+npm test                # service, client, widget
 ```
 
 ## Roadmap
 
 - Done: widget published to npm; service deployable to a public cloud endpoint.
-- CLI: `npx feedback-sdk init` to provision a project and print keys.
+- Done: owner-key `POST /projects` endpoint -- provisioning is now possible
+  over HTTP, no repo checkout required.
+- CLI: `npx feedback-sdk init` as a friendlier wrapper over the same endpoint.
 - MCP server so agents get `feedback_list` / `feedback_resolve` tools directly.
 - Multi-tenant (accounts, dashboard) to open it beyond a single owner.
