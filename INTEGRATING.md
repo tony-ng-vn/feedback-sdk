@@ -35,8 +35,9 @@ npm install feedback-sdk-widget
 ```
 
 Set two env vars in your app: `$SITE` and the submit token.
-The widget is a browser custom element; it touches `HTMLElement` at import time, so a top-level import crashes any SSR framework (Next.js, SvelteKit, Nuxt) on the server.
-Guard it with a client-only hook -- the SSR guard pattern:
+The widget is a browser custom element.
+On version 0.3.0+ a plain top-level `import "feedback-sdk-widget"` is SSR-safe.
+On 0.2.x and older it crashes SSR frameworks (Next.js, SvelteKit, Nuxt) on the server, so guard it with a client-only hook -- the SSR guard pattern (also useful on any version to keep the widget out of your server bundle):
 
 ```jsx
 // React / Next.js: dynamic import inside a client-only hook, not top level.
