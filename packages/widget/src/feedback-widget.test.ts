@@ -174,6 +174,41 @@ test("embed: the module leaves no widget globals on window", () => {
   expect(w.feedbackWidget).toBeUndefined();
 });
 
+function hostVar(el: Element, name: string): string {
+  return getComputedStyle(el as HTMLElement).getPropertyValue(name).trim().toLowerCase();
+}
+
+test("theme: defaults to the light palette when no theme is set", () => {
+  const el = mount({ endpoint: "https://x.site", token: "fbk_x_1" });
+  expect(hostVar(el, "--fw-surface")).toBe("#ffffff");
+  expect(hostVar(el, "--fw-text")).toBe("#111111");
+});
+
+test('theme="dark" switches the widget to a dark palette', () => {
+  const el = mount({ endpoint: "https://x.site", token: "fbk_x_1", theme: "dark" });
+  // Dark surface, light text -- the whole point.
+  expect(hostVar(el, "--fw-surface")).toBe("#16161a");
+  expect(hostVar(el, "--fw-text")).toBe("#f4f4f6");
+});
+
+test('theme="light" is explicit light and matches the default', () => {
+  const el = mount({ endpoint: "https://x.site", token: "fbk_x_1", theme: "light" });
+  expect(hostVar(el, "--fw-surface")).toBe("#ffffff");
+});
+
+test('theme="auto" ships a prefers-color-scheme dark rule', () => {
+  const el = mount({ endpoint: "https://x.site", token: "fbk_x_1", theme: "auto" });
+  const style = shadow(el).querySelector("style")?.textContent ?? "";
+  expect(style).toMatch(/@media\s*\(prefers-color-scheme:\s*dark\)/);
+  expect(style).toContain(':host([theme="auto"])');
+});
+
+test("an app's own CSS variable override still wins over the built-in dark theme", () => {
+  const el = mount({ endpoint: "https://x.site", token: "fbk_x_1", theme: "dark" });
+  (el as HTMLElement).style.setProperty("--fw-surface", "#abcdef");
+  expect(hostVar(el, "--fw-surface")).toBe("#abcdef");
+});
+
 test("markup in a server error message is escaped, not injected", async () => {
   submitMock.mockRejectedValue(new Error("<img src=x onerror=window.__xss=1>"));
   (window as unknown as { __xss?: number }).__xss = undefined;

@@ -22,6 +22,26 @@ const STYLE = `
     z-index: var(--fw-z);
     font-family: system-ui, -apple-system, sans-serif;
   }
+  /* Dark palette. Opt in with theme="dark", or theme="auto" to follow the OS.
+     Only surfaces/text/border change -- the accent is the brand color and
+     works on both grounds. An app's own --fw-* overrides still win over these,
+     because outer-page styles beat shadow :host rules in the cascade. */
+  :host([theme="dark"]) {
+    --fw-surface: #16161a;
+    --fw-surface-strong: #202027;
+    --fw-text: #f4f4f6;
+    --fw-muted: #9b9ba6;
+    --fw-border: rgba(255, 255, 255, 0.14);
+  }
+  @media (prefers-color-scheme: dark) {
+    :host([theme="auto"]) {
+      --fw-surface: #16161a;
+      --fw-surface-strong: #202027;
+      --fw-text: #f4f4f6;
+      --fw-muted: #9b9ba6;
+      --fw-border: rgba(255, 255, 255, 0.14);
+    }
+  }
   .fw-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
   .fw-fab {
     min-height: 34px; padding: 7px 15px;

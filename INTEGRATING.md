@@ -50,6 +50,9 @@ export function Feedback({ endpoint, token }) {
 SvelteKit: same idea inside `onMount` instead of `useEffect`.
 Plain client-only apps (Vite/CRA, no SSR) can just `import "feedback-sdk-widget"` at the top -- no guard needed.
 
+If your app is dark-themed, add `theme="dark"` (or `theme="auto"` to follow the user's OS) so the widget does not render as a light panel on your dark UI:
+`<feedback-widget endpoint={endpoint} token={token} theme="dark" />`.
+
 ## 3. Verify it works
 
 ```bash

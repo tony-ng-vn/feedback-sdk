@@ -12,6 +12,8 @@ A framework-agnostic feedback button. Renders in Shadow DOM; themeable via CSS c
   - `page-context` (optional) -- default `location.pathname + location.search`
   - `label` (optional) -- button text; default `Feedback`
   - `submitter` (optional) -- identity string; omitted means anonymous
+  - `theme` (optional) -- `light` (default), `dark`, or `auto` (follows the OS
+    via `prefers-color-scheme`). Your `--fw-*` overrides still win over it.
 - Event: `feedback-submitted`, `CustomEvent<{ id: string }>`, bubbles + composed
 - Theming: override `--fw-accent`, `--fw-surface`, `--fw-surface-strong`, `--fw-text`, `--fw-muted`, `--fw-border`, `--fw-radius`, `--fw-z`
 
