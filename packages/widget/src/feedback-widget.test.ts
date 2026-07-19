@@ -209,6 +209,20 @@ test("an app's own CSS variable override still wins over the built-in dark theme
   expect(hostVar(el, "--fw-surface")).toBe("#abcdef");
 });
 
+test("form controls inherit the widget font instead of browser defaults", () => {
+  const el = mount({ endpoint: "https://x.site", token: "fbk_x_1" });
+  (shadow(el).querySelector(".fw-fab") as HTMLButtonElement).click();
+  const hostFont = getComputedStyle(el as HTMLElement).fontFamily;
+  // Guard against a vacuous pass if computed styles come back empty.
+  expect(hostFont).toContain("system-ui");
+  // Browsers give textareas a monospace default; the widget must override it
+  // or the panel is typeset in two clashing fonts. happy-dom reports the
+  // literal "inherit" rather than resolving it, so accept either form -- what
+  // this guards is the reset reaching the control at all.
+  const input = shadow(el).querySelector(".fw-input") as HTMLTextAreaElement;
+  expect(["inherit", hostFont]).toContain(getComputedStyle(input).fontFamily);
+});
+
 test("markup in a server error message is escaped, not injected", async () => {
   submitMock.mockRejectedValue(new Error("<img src=x onerror=window.__xss=1>"));
   (window as unknown as { __xss?: number }).__xss = undefined;
