@@ -1,5 +1,5 @@
 {
-  "name": "feedback-sdk",
+  "name": "feedback-sdk-cli",
   "version": "0.1.0",
   "description": "Provisioning CLI for feedback-sdk: mints a project's tokens with one command.",
   "type": "module",
@@ -17,7 +17,7 @@
     "provisioning"
   ],
   "bin": {
-    "feedback-sdk": "bin/feedback-sdk.js"
+    "feedback-sdk-cli": "bin/feedback-sdk.js"
   },
   "files": [
     "bin",

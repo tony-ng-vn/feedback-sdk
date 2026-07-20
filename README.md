@@ -194,6 +194,11 @@ npm test                # service, client, widget
 - Done: widget published to npm; service deployable to a public cloud endpoint.
 - Done: owner-key `POST /projects` endpoint -- provisioning is now possible
   over HTTP, no repo checkout required.
-- CLI: `npx feedback-sdk init` as a friendlier wrapper over the same endpoint.
-- MCP server so agents get `feedback_list` / `feedback_resolve` tools directly.
+- Done: `npx feedback-sdk-cli init` as a friendlier wrapper over the same
+  endpoint (published as `feedback-sdk-cli` -- the name `feedback-sdk` was
+  blocked by npm's collision check against an unrelated package).
+- Done: MCP server (`feedback-sdk-mcp`) so agents get `feedback_list` /
+  `feedback_resolve` / `feedback_delete` tools directly.
+- Done: light/dark/auto theming (`theme="dark"` / `"auto"`) and an SSR-safe
+  top-level import for the widget, as of 0.3.0.
 - Multi-tenant (accounts, dashboard) to open it beyond a single owner.

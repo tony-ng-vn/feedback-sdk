@@ -1,11 +1,11 @@
-# feedback-sdk
+# feedback-sdk-cli
 
 A one-command provisioning CLI for [feedback-sdk](https://github.com/tony-ng-vn/feedback-sdk).
 
 ## Usage
 
 ```
-npx feedback-sdk init --site <url> --owner-key <key> --slug <name> [--env-prefix <PREFIX_>]
+npx feedback-sdk-cli init --site <url> --owner-key <key> --slug <name> [--env-prefix <PREFIX_>]
 ```
 
 - `--site` -- the running feedback-sdk service's base URL (its `.convex.site` origin)
