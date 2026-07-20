@@ -9,6 +9,7 @@ const MAX_SCREENSHOT_BYTES = 3_000_000; // 3 MB
 const STYLE = `
   :host {
     --fw-accent: #4f46e5;
+    --fw-accent-ink: #ffffff;
     --fw-surface: #ffffff;
     --fw-surface-strong: #f5f5f7;
     --fw-text: #111111;
@@ -22,6 +23,29 @@ const STYLE = `
     z-index: var(--fw-z);
     font-family: system-ui, -apple-system, sans-serif;
   }
+  /* Dark palette. Opt in with theme="dark", or theme="auto" to follow the OS.
+     Only surfaces/text/border change -- the accent is the brand color and
+     works on both grounds. An app's own --fw-* overrides still win over these,
+     because outer-page styles beat shadow :host rules in the cascade. */
+  :host([theme="dark"]) {
+    --fw-surface: #16161a;
+    --fw-surface-strong: #202027;
+    --fw-text: #f4f4f6;
+    --fw-muted: #9b9ba6;
+    --fw-border: rgba(255, 255, 255, 0.14);
+  }
+  @media (prefers-color-scheme: dark) {
+    :host([theme="auto"]) {
+      --fw-surface: #16161a;
+      --fw-surface-strong: #202027;
+      --fw-text: #f4f4f6;
+      --fw-muted: #9b9ba6;
+      --fw-border: rgba(255, 255, 255, 0.14);
+    }
+  }
+  /* Form controls do not inherit font by default (browsers give textareas
+     monospace), which typeset the panel in two clashing fonts. */
+  button, textarea, input { font: inherit; }
   .fw-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
   .fw-fab {
     min-height: 34px; padding: 7px 15px;
@@ -36,22 +60,24 @@ const STYLE = `
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
   }
   .fw-head { display: flex; justify-content: space-between; align-items: center;
-    color: var(--fw-text); font-size: 13px; font-weight: 600; }
-  .fw-close { border: 0; background: transparent; color: var(--fw-muted);
-    font-size: 18px; line-height: 1; cursor: pointer; }
+    color: var(--fw-text); font-size: 14px; font-weight: 600; }
+  .fw-close { display: grid; place-items: center; width: 24px; height: 24px;
+    border: 0; border-radius: 7px; background: transparent; color: var(--fw-muted);
+    cursor: pointer; }
+  .fw-close:hover { color: var(--fw-text); background: var(--fw-surface-strong); }
   .fw-chips { display: flex; gap: 6px; }
   .fw-chip { flex: 1; min-height: 30px; border: 1px solid var(--fw-border);
     border-radius: 999px; background: transparent; color: var(--fw-text);
     font-size: 12px; cursor: pointer; text-transform: capitalize; }
-  .fw-chip[aria-pressed="true"] { background: var(--fw-surface-strong);
-    border-color: var(--fw-accent); }
+  .fw-chip[aria-pressed="true"] { background: var(--fw-accent);
+    border-color: var(--fw-accent); color: var(--fw-accent-ink); }
   .fw-input { width: 100%; box-sizing: border-box; resize: vertical; padding: 10px;
     border: 1px solid var(--fw-border); border-radius: 12px;
     background: var(--fw-surface-strong); color: var(--fw-text); font-size: 13px; }
   .fw-error { margin: 0; color: #d64545; font-size: 12px; }
   .fw-submit { min-height: 34px; border: 0; border-radius: 999px;
-    background: var(--fw-accent); color: #fff; font-size: 13px; font-weight: 600;
-    cursor: pointer; }
+    background: var(--fw-accent); color: var(--fw-accent-ink); font-size: 13px;
+    font-weight: 600; cursor: pointer; }
   .fw-submit:disabled { opacity: 0.55; cursor: default; }
   .fw-attach { display: inline-flex; align-items: center; gap: 6px;
     font-size: 12px; color: var(--fw-muted); cursor: pointer; width: fit-content;
@@ -61,14 +87,19 @@ const STYLE = `
   .fw-thumb { display: block; max-height: 92px; max-width: 100%;
     border-radius: 8px; border: 1px solid var(--fw-border); }
   .fw-remove { position: absolute; top: -8px; right: -8px; width: 20px; height: 20px;
-    border-radius: 50%; border: 0; background: var(--fw-text); color: var(--fw-surface);
-    font-size: 12px; line-height: 1; cursor: pointer; }
+    display: grid; place-items: center; border-radius: 50%; border: 0;
+    background: var(--fw-text); color: var(--fw-surface); cursor: pointer; }
+  .fw-remove svg { width: 10px; height: 10px; }
   [hidden] { display: none !important; }
 `;
 
 // Escape dynamic values before templating into innerHTML. Attribute values,
 // the typed message, and server error text are all untrusted from the widget's
 // point of view, so they must never be interpolated raw.
+// A drawn icon, not the letter "x": form controls should not lean on letter
+// glyphs for iconography.
+const CLOSE_ICON = `<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7"/></svg>`;
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -78,7 +109,16 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-export class FeedbackWidget extends HTMLElement {
+// HTMLElement does not exist on the server, so extending it directly makes a
+// top-level import crash every SSR framework. Extend a stub there instead: the
+// class is only instantiated via customElements, which is browser-only, so the
+// stub never reaches a DOM.
+const BaseElement =
+  typeof HTMLElement !== "undefined"
+    ? HTMLElement
+    : (class {} as unknown as typeof HTMLElement);
+
+export class FeedbackWidget extends BaseElement {
   private root: ShadowRoot;
   private open = false;
   private state: State = "idle";
@@ -204,13 +244,13 @@ export class FeedbackWidget extends HTMLElement {
         <div class="fw-panel" ${this.open ? "" : "hidden"} role="dialog" aria-label="Send feedback">
           <div class="fw-head">
             <span>Share an idea</span>
-            <button class="fw-close" aria-label="Close">x</button>
+            <button class="fw-close" aria-label="Close">${CLOSE_ICON}</button>
           </div>
           <div class="fw-chips">${chips}</div>
           <textarea class="fw-input" rows="4" placeholder="What's on your mind?" ${sending || sent ? "disabled" : ""}>${escapeHtml(this.message)}</textarea>
           ${
             this.screenshot
-              ? `<div class="fw-preview"><img class="fw-thumb" alt="Attached screenshot" /><button class="fw-remove" type="button" aria-label="Remove screenshot" ${sending || sent ? "disabled" : ""}>x</button></div>`
+              ? `<div class="fw-preview"><img class="fw-thumb" alt="Attached screenshot" /><button class="fw-remove" type="button" aria-label="Remove screenshot" ${sending || sent ? "disabled" : ""}>${CLOSE_ICON}</button></div>`
               : `<label class="fw-attach">Attach screenshot<input class="fw-file" type="file" accept="image/*" hidden ${sending || sent ? "disabled" : ""} /></label>`
           }
           ${this.state === "error" ? `<p class="fw-error" role="alert">${escapeHtml(this.errorMessage)}</p>` : ""}

@@ -1,6 +1,6 @@
 {
   "name": "feedback-sdk-widget",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "A framework-agnostic feedback button whose inbox is an agent work queue.",
   "type": "module",
   "license": "MIT",

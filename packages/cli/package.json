@@ -1,0 +1,33 @@
+{
+  "name": "feedback-sdk",
+  "version": "0.1.0",
+  "description": "Provisioning CLI for feedback-sdk: mints a project's tokens with one command.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://github.com/tony-ng-vn/feedback-sdk",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tony-ng-vn/feedback-sdk.git",
+    "directory": "packages/cli"
+  },
+  "keywords": [
+    "feedback",
+    "cli",
+    "convex",
+    "provisioning"
+  ],
+  "bin": {
+    "feedback-sdk": "bin/feedback-sdk.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "vitest run"
+  }
+}
