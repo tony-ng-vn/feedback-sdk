@@ -93,10 +93,10 @@ Full local walkthrough, including the demo page: [`docs/TESTING.md`](docs/TESTIN
 
 ## Using the widget in an app
 
-The widget is a browser custom element (`class extends HTMLElement`). **Import it
-on the client only** -- importing at module top level crashes any server-rendering
-framework (Next.js, SvelteKit, Nuxt) because `HTMLElement` does not exist on the
-server. Use the guarded pattern for your stack:
+The widget is a browser custom element.
+As of 0.3.0 a top-level import is safe under server-side rendering: on the server the element simply does not register, and it upgrades normally in the browser.
+On 0.2.x and older, a top-level import crashes SSR frameworks (Next.js, SvelteKit, Nuxt) because `HTMLElement` does not exist on the server -- use the dynamic-import patterns below there.
+They also remain useful on 0.3.0+ to keep the widget out of your server bundle:
 
 Plain client-side app (Vite/CRA, no SSR):
 
@@ -130,7 +130,11 @@ Attributes:
 - `endpoint` (required) -- your service URL (`CONVEX_SITE_URL`)
 - `token` (required) -- the project's public submit token (`fbk_...`)
 - optional: `categories` (csv), `page-context`, `label`, `submitter`
-- theming: override `--fw-accent`, `--fw-surface`, `--fw-text`, `--fw-radius`, and friends
+- `theme` -- `light` (default), `dark`, or `auto` (follows the OS via
+  `prefers-color-scheme`). Dark apps want `theme="dark"` or `theme="auto"`.
+- theming: override `--fw-accent`, `--fw-surface`, `--fw-text`, `--fw-radius`, and
+  friends. These win over the `theme` presets, so you can start from `dark` and
+  retune a variable or two.
 - fires `feedback-submitted` (`CustomEvent<{ id: string }>`) on success
 
 The panel has an "Attach screenshot" control: the submitter can attach an image

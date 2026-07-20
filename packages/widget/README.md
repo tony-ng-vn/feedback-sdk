@@ -12,6 +12,8 @@ A framework-agnostic feedback button. Renders in Shadow DOM; themeable via CSS c
   - `page-context` (optional) -- default `location.pathname + location.search`
   - `label` (optional) -- button text; default `Feedback`
   - `submitter` (optional) -- identity string; omitted means anonymous
+  - `theme` (optional) -- `light` (default), `dark`, or `auto` (follows the OS
+    via `prefers-color-scheme`). Your `--fw-*` overrides still win over it.
 - Event: `feedback-submitted`, `CustomEvent<{ id: string }>`, bubbles + composed
 - Theming: override `--fw-accent`, `--fw-surface`, `--fw-surface-strong`, `--fw-text`, `--fw-muted`, `--fw-border`, `--fw-radius`, `--fw-z`
 
@@ -23,10 +25,9 @@ feedback-sdk service -- ask its owner for them, or see
 in the main repo for the full playbook. You do not need that repo's source to
 use this package.
 
-The widget is a browser custom element (`class extends HTMLElement`). **Import
-it on the client only.** A top-level import crashes any server-rendering
-framework (Next.js, SvelteKit, Nuxt) because `HTMLElement` does not exist on
-the server.
+The widget is a browser custom element.
+As of 0.3.0 a top-level import is SSR-safe: on the server the element simply does not register, and it upgrades normally in the browser.
+On 0.2.x and older a top-level import crashes server-rendering frameworks (Next.js, SvelteKit, Nuxt); use the client-only dynamic-import patterns below there.
 
 Plain client-side app (Vite/CRA, no SSR):
 

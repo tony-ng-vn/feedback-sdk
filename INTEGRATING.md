@@ -35,8 +35,9 @@ npm install feedback-sdk-widget
 ```
 
 Set two env vars in your app: `$SITE` and the submit token.
-The widget is a browser custom element; it touches `HTMLElement` at import time, so a top-level import crashes any SSR framework (Next.js, SvelteKit, Nuxt) on the server.
-Guard it with a client-only hook -- the SSR guard pattern:
+The widget is a browser custom element.
+On version 0.3.0+ a plain top-level `import "feedback-sdk-widget"` is SSR-safe.
+On 0.2.x and older it crashes SSR frameworks (Next.js, SvelteKit, Nuxt) on the server, so guard it with a client-only hook -- the SSR guard pattern (also useful on any version to keep the widget out of your server bundle):
 
 ```jsx
 // React / Next.js: dynamic import inside a client-only hook, not top level.
@@ -49,6 +50,9 @@ export function Feedback({ endpoint, token }) {
 
 SvelteKit: same idea inside `onMount` instead of `useEffect`.
 Plain client-only apps (Vite/CRA, no SSR) can just `import "feedback-sdk-widget"` at the top -- no guard needed.
+
+If your app is dark-themed, add `theme="dark"` (or `theme="auto"` to follow the user's OS) so the widget does not render as a light panel on your dark UI:
+`<feedback-widget endpoint={endpoint} token={token} theme="dark" />`.
 
 ## 3. Verify it works
 

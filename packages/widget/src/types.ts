@@ -11,6 +11,7 @@ export interface FeedbackSubmittedDetail {
 // Names of the CSS custom properties the widget exposes for theming.
 export const THEME_VARS = [
   "--fw-accent",
+  "--fw-accent-ink",
   "--fw-surface",
   "--fw-surface-strong",
   "--fw-text",
